@@ -62,6 +62,14 @@ function pco_calendar_settings_init() {
 		'pco-calendar',
 		'pco_calendar_main_section'
 	);
+
+    add_settings_field(
+		'pco_standout_tags',
+		'Standout Tags',
+		'pco_standout_tags_render',
+		'pco-calendar',
+		'pco_calendar_main_section'
+	);
 }
 
 function pco_calendar_section_callback() {
@@ -119,11 +127,32 @@ function pco_default_calendars_render() {
     }
 }
 
+function pco_standout_tags_render() {
+	$options = get_option( 'pco_calendar_settings' );
+    $api = new PCO_API_Handler();
+    $tags = $api->get_tags();
+
+    if ( is_wp_error( $tags ) ) {
+        echo '<p>Could not load tags: ' . esc_html($tags->get_error_message()) . '</p>';
+        return;
+    }
+
+    $standout = isset($options['standout_tags']) ? (array)$options['standout_tags'] : array();
+    echo '<p class="description">Select tags that should make events stand out (e.g., Worship Service).</p>';
+    foreach ( $tags as $tag ) {
+        $id = $tag['id'];
+        $name = $tag['attributes']['name'];
+        $checked = in_array($id, $standout) ? 'checked' : '';
+        echo "<label><input type='checkbox' name='pco_calendar_settings[standout_tags][]' value='$id' $checked> $name</label><br>";
+    }
+}
+
 function pco_calendar_settings_page() {
     // Handle manual cache clear
     if ( isset($_POST['pco_clear_cache']) && check_admin_referer('pco_clear_cache_action') ) {
         delete_transient('pco_calendars_cache');
         delete_transient('pco_events_cache');
+        delete_transient('pco_tags_cache');
         echo '<div class="updated"><p>Cache cleared successfully!</p></div>';
     }
 	?>

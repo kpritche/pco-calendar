@@ -72,8 +72,8 @@ class PCO_API_Handler {
         }
 
         $args = array(
-            'filter'  => 'future',
-            'include' => 'event,calendar,event.calendar',
+            'filter'  => 'future,published',
+            'include' => 'event,calendar,event.calendar,event.tags,resource_bookings.resource',
             'order'   => 'starts_at',
             'per_page' => 100
         );
@@ -104,5 +104,33 @@ class PCO_API_Handler {
         }
 
         return new WP_Error( 'pco_api_error', 'Invalid events response from PCO API' );
+    }
+
+    public function get_tags() {
+        $cache_key = 'pco_tags_cache';
+        $cached_data = get_transient( $cache_key );
+
+        if ( $cached_data === false ) {
+            $response = wp_remote_get( $this->base_url . 'tags', array(
+                'headers' => $this->get_auth_header()
+            ) );
+
+            if ( is_wp_error( $response ) ) return $response;
+
+            $code = wp_remote_retrieve_response_code($response);
+            if ($code !== 200) {
+                return new WP_Error('pco_api_error', 'Tags: API error ' . $code);
+            }
+
+            $body = wp_remote_retrieve_body( $response );
+            $data = json_decode( $body, true );
+
+            if ( !isset( $data['data'] ) ) return new WP_Error( 'pco_api_error', 'Invalid tags response' );
+            
+            $cached_data = $data['data'];
+            set_transient( $cache_key, $cached_data, DAY_IN_SECONDS );
+        }
+
+        return $cached_data;
     }
 }

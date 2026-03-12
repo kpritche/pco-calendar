@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PCO Agenda Calendar
  * Description: A filterable list/agenda view for Planning Center Online (PCO) Calendar events.
- * Version: 1.0.0
+ * Version: 1.5.0
  * Author: Kory Pritchett
  */
 
@@ -28,6 +28,8 @@ function pco_calendar_activate() {
 			'app_id'            => '',
 			'secret'            => '',
 			'default_calendars' => array(),
+			'enabled_calendars' => array(),
+			'standout_tags'     => array(),
 		) );
 	}
 }
@@ -44,6 +46,7 @@ function pco_calendar_enqueue_assets() {
     wp_localize_script( 'pco-calendar-script', 'pcoSettings', array(
         'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
         'defaultCalendars' => isset($settings['default_calendars']) ? $settings['default_calendars'] : array(),
+        'standoutTags'     => isset($settings['standout_tags']) ? $settings['standout_tags'] : array(),
     ) );
 }
 

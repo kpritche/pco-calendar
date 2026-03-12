@@ -62,7 +62,47 @@
     border-radius: 4px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     padding: 15px;
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pco-event-card.pco-has-summary {
+    cursor: pointer;
+}
+
+.pco-details-prompt {
+    margin-top: 10px;
+    font-size: 0.85em;
+    color: var(--pco-accent);
+    font-style: italic;
+    font-weight: 500;
+}
+
+.pco-event-card.expanded .pco-details-prompt {
+    color: #999;
+}
+
+.pco-event-card.expanded {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.pco-event-summary {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    font-size: 0.95em;
+    line-height: 1.6;
+    color: var(--pco-text);
+}
+
+.pco-event-card.pco-standout {
+    border-left-color: var(--pco-orange);
+    background: #fff9f5;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(255, 127, 48, 0.2);
+}
+
+.pco-event-card.pco-standout .pco-event-day {
+    color: var(--pco-orange);
 }
 
 .pco-event-card:hover {
@@ -113,6 +153,11 @@
 .pco-event-time {
     display: flex;
     align-items: center;
+}
+
+.pco-event-room {
+    color: var(--pco-orange);
+    font-weight: 600;
 }
 
 .pco-event-calendar-name {
