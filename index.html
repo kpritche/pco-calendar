@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCO Calendar Prototype</title>
+    <link rel="stylesheet" href="assets/css/pco-calendar.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { padding: 40px; background: #f0f0f0; max-width: 800px; margin: 0 auto; }
+        .prototype-info { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #ff7f30; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .mode-toggle { margin-top: 15px; }
+        .mode-toggle button { padding: 8px 15px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; background: #eee; }
+        .mode-toggle button.active { background: #ff7f30; color: #fff; border-color: #ff7f30; }
+        .pco-error { color: #d00; background: #fee; padding: 15px; border-radius: 4px; border: 1px solid #fcc; }
+    </style>
+</head>
+<body>
+    <div class="prototype-info">
+        <strong>PCO Prototype Test:</strong> Toggle between mock and live data.
+        <div class="mode-toggle">
+            <button id="btn-mock" class="active">Mock Data</button>
+            <button id="btn-live">Live PCO Data (via proxy)</button>
+        </div>
+        <div id="status-msg" style="margin-top:10px; font-size: 0.8em; color: #666;"></div>
+    </div>
+
+    <div id="pco-agenda-container" class="pco-agenda">
+        <div id="pco-filters" class="pco-filters"><p>Loading calendars...</p></div>
+        <div id="pco-event-list" class="pco-event-list"><p>Loading events...</p></div>
+    </div>
+
+    <script>
+        const pcoSettings = { defaultCalendars: [] };
+        let allEvents = [];
+        let allCalendars = [];
+        let activeCalendarIds = [];
+
+        const mockData = {
+            success: true,
+            data: {
+                calendars: [
+                    { id: 'cal-1', attributes: { name: 'General Church' } },
+                    { id: 'cal-2', attributes: { name: 'Youth' } }
+                ],
+                events: {
+                    data: [
+                        { id: 'inst-1', relationships: { event: { data: { id: 'evt-1' } }, calendar: { data: { id: 'cal-1' } } }, attributes: { starts_at: new Date(Date.now() + 86400000).toISOString() } },
+                        { id: 'inst-2', relationships: { event: { data: { id: 'evt-2' } }, calendar: { data: { id: 'cal-2' } } }, attributes: { starts_at: new Date(Date.now() + 172800000).toISOString() } }
+                    ],
+                    included: [
+                        { type: 'Event', id: 'evt-1', attributes: { name: 'Sunday Service' } },
+                        { type: 'Event', id: 'evt-2', attributes: { name: 'Youth Group' } },
+                        { type: 'Calendar', id: 'cal-1', attributes: { name: 'General Church' } },
+                        { type: 'Calendar', id: 'cal-2', attributes: { name: 'Youth' } }
+                    ]
+                }
+            }
+        };
+
+        function processData(response) {
+            if (!response.success) {
+                $('#pco-event-list').html(`<p class="pco-error">Error: ${response.data}</p>`);
+                return;
+            }
+            allCalendars = response.data.calendars;
+            const included = response.data.events.included || [];
+            allEvents = (response.data.events.data || []).map(instance => {
+                const eventId = instance.relationships.event.data.id;
+                const eventDetails = included.find(inc => inc.type === 'Event' && inc.id === eventId);
+                
+                // Smart Mapping
+                let calendarId = instance.relationships.calendar ? instance.relationships.calendar.data.id : null;
+                if (!calendarId && eventDetails && eventDetails.relationships.calendar) {
+                    calendarId = eventDetails.relationships.calendar.data.id;
+                }
+
+                // Try to find name in included or main list
+                let calendarDetails = included.find(inc => inc.type === 'Calendar' && inc.id === calendarId);
+                let calendarName = 'Unknown Calendar';
+                if (calendarDetails) {
+                    calendarName = calendarDetails.attributes.name;
+                } else {
+                    const mainCal = allCalendars.find(c => c.id === calendarId);
+                    if (mainCal) calendarName = mainCal.attributes.name;
+                }
+
+                return {
+                    ...instance,
+                    event_name: eventDetails ? eventDetails.attributes.name : 'Unknown Event',
+                    calendar_id: calendarId,
+                    calendar_name: calendarName,
+                    starts_at: new Date(instance.attributes.starts_at)
+                };
+            });
+            renderFilters();
+            renderEvents();
+        }
+
+        function renderFilters() {
+            $('#pco-filters').empty().toggle(allCalendars.length > 0);
+            allCalendars.forEach(calendar => {
+                const isActive = activeCalendarIds.includes(calendar.id);
+                $('<div class="pco-filter-chip"></div>')
+                    .text(calendar.attributes.name).attr('data-id', calendar.id).toggleClass('active', isActive)
+                    .on('click', function() {
+                        const id = $(this).attr('data-id');
+                        $(this).toggleClass('active');
+                        activeCalendarIds = activeCalendarIds.includes(id) ? activeCalendarIds.filter(i => i !== id) : [...activeCalendarIds, id];
+                        renderEvents();
+                    }).appendTo('#pco-filters');
+            });
+        }
+
+        function renderEvents() {
+            const $list = $('#pco-event-list').empty();
+            const filtered = allEvents.filter(e => activeCalendarIds.length === 0 || activeCalendarIds.includes(e.calendar_id));
+            if (filtered.length === 0) return $list.append('<div class="pco-no-results">No events found.</div>');
+            filtered.forEach(event => {
+                const d = event.starts_at;
+                $(`
+                    <div class="pco-event-card">
+                        <div class="pco-event-date"><span class="pco-event-day">${d.getDate()}</span><span class="pco-event-month">${d.toLocaleString('default',{month:'short'})}</span></div>
+                        <div class="pco-event-content">
+                            <div class="pco-event-title">${event.event_name}</div>
+                            <div class="pco-event-meta"><span class="pco-event-time">${d.toLocaleString('en-US',{hour:'numeric',minute:'2-digit',hour12:true})}</span><span class="pco-event-calendar-name">${event.calendar_name}</span></div>
+                        </div>
+                    </div>
+                `).appendTo($list);
+            });
+        }
+
+        $('#btn-mock').click(() => {
+            $('.mode-toggle button').removeClass('active'); $('#btn-mock').addClass('active');
+            $('#status-msg').text('Using mock data.');
+            processData(mockData);
+        });
+
+        $('#btn-live').click(() => {
+            $('.mode-toggle button').removeClass('active'); $('#btn-live').addClass('active');
+            $('#status-msg').text('Connecting to PCO via proxy...');
+            $.getJSON('pco-proxy.php', (res) => {
+                if(res.success) $('#status-msg').text('Live connection successful.');
+                processData(res);
+            }).fail(() => {
+                $('#pco-event-list').html('<p class="pco-error">Proxy failed. Ensure pco-proxy.php exists and you have PHP running.</p>');
+            });
+        });
+
+        processData(mockData);
+    </script>
+</body>
+</html>

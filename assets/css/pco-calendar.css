@@ -1,0 +1,159 @@
+:root {
+    --pco-primary: #16463e;
+    --pco-accent: #51bf9b;
+    --pco-orange: #ff7f30;
+    --pco-blue: #6fcfeb;
+    --pco-tan: #cda787;
+    --pco-white: #ffffff;
+    --pco-text: #333333;
+}
+
+.pco-agenda {
+    font-family: inherit;
+    color: var(--pco-text);
+    margin: 20px 0;
+}
+
+/* Filters */
+.pco-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 30px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid var(--pco-tan);
+}
+
+.pco-filter-chip {
+    padding: 8px 15px;
+    border-radius: 20px;
+    background: var(--pco-white);
+    border: 1px solid var(--pco-tan);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9em;
+    user-select: none;
+}
+
+.pco-filter-chip.active {
+    background: var(--pco-primary);
+    color: var(--pco-white);
+    border-color: var(--pco-primary);
+}
+
+.pco-filter-chip:hover:not(.active) {
+    border-color: var(--pco-accent);
+    color: var(--pco-accent);
+}
+
+/* Event List */
+.pco-event-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.pco-event-card {
+    display: flex;
+    background: var(--pco-white);
+    border-left: 5px solid var(--pco-primary);
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 15px;
+    transition: transform 0.2s ease;
+}
+
+.pco-event-card:hover {
+    transform: translateX(5px);
+}
+
+.pco-event-date {
+    flex: 0 0 80px;
+    text-align: center;
+    border-right: 1px solid #eee;
+    margin-right: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.pco-event-day {
+    font-weight: bold;
+    font-size: 1.5em;
+    color: var(--pco-primary);
+}
+
+.pco-event-month {
+    text-transform: uppercase;
+    font-size: 0.8em;
+    color: var(--pco-accent);
+}
+
+.pco-event-content {
+    flex-grow: 1;
+}
+
+.pco-event-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: var(--pco-primary);
+}
+
+.pco-event-meta {
+    font-size: 0.9em;
+    color: #666;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.pco-event-time {
+    display: flex;
+    align-items: center;
+}
+
+.pco-event-calendar-name {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--pco-blue);
+    color: var(--pco-primary);
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+/* Hidden state for filtering */
+.pco-event-card.hidden {
+    display: none;
+}
+
+/* No results message */
+.pco-no-results {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .pco-event-card {
+        flex-direction: column;
+    }
+    .pco-event-date {
+        flex: none;
+        border-right: none;
+        border-bottom: 1px solid #eee;
+        margin-right: 0;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        flex-direction: row;
+        gap: 10px;
+        justify-content: flex-start;
+    }
+    .pco-event-day {
+        font-size: 1.2em;
+    }
+}
